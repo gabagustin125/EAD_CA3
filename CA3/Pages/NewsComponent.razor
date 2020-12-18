@@ -1,0 +1,70 @@
+﻿@page "/newscomponent"
+@inject HttpClient Http
+
+@using System.Runtime.Serialization;
+
+@if (newsquery.rootData == null)
+{
+    <p><em>Loading Page</em></p>
+}
+else
+{
+<div>
+    <label for="name"><strong>News API</strong>:</label>
+    <input type="text" class="form-control" placeholder="Search Author" @bind="@newsquery.SearchValue" @oninput="@((f) => { newsquery.SearchValue = (string)f.Value; })" />
+</div>
+
+    <button class="btn-primary" @onclick="() => newsquery.AscendingDate()">Ascending</button>
+    <button class="btn-danger"@onclick="() => newsquery.DescendingDate()">Descending</button>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Source</th>
+                <th>Author</th>
+                <th>Publish Date</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>URLs</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            @foreach (var item in newsquery.rootData.articles.Where(x => newsquery.SearchData(x)))
+            {
+            <tr>
+                <td>Source: @item.source.name</td>
+                <td>Author : @item.author</td>
+                <td>Publish Date : @item.publishedAt.ToLongDateString()</td>
+                <td>Title : @item.title</td>
+                <td>Description : @item.description</td>
+                <td>URLs : <a href="@item.url">Link to Article</a></td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+@code {
+    public string urltag { get; set; } = "apple";
+    Query newsquery = new Query();
+
+    public async Task GetNews()
+    {
+        try
+        {
+            string uri = "https://newsapi.org/v2/everything?q=" + urltag + "&apiKey=78ab622934c64f16bfc059b559457036";
+            newsquery.rootData = await Http.GetFromJsonAsync<Root>(uri);
+        }
+        catch (Exception e)
+        {
+            string errormessage = e.Message;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetNews();
+    }
+
+}
+
